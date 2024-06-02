@@ -1,0 +1,13 @@
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context(viewport={"width":800,"height":600})
+    page = context.new_page()
+    page.goto("https://playwright.dev/")
+    page.goto("https://auth.max.com/login")
+    page.goto("https://auth.max.com/login?flow=login")
+    page.get_by_role("button", name="Aceptar todas las cookies").click()
+    page.get_by_test_id("gisdk.gi-login-username.email_field").click()
+    page.get_by_test_id("gisdk.gi-login-username.email_field").fill("dsdsdsds")
+    page.get_by_test_id("gisdk.gi-login-username.password_field").click()
+    page.get_by_test_id("gisdk.gi-login-username.password_field").fill("sdsdsddsd")
+    page.get_by_test_id("gisdk.gi-login-username.signIn_button").click()
