@@ -128,5 +128,4 @@ def setup():
     create_virtual_environment()
     activate_virtual_environment()
 
-# setup()
-install_geckodriver()
+setup()
