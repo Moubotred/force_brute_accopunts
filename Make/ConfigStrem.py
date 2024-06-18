@@ -11,6 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException,TimeoutException
 from playwright.sync_api import sync_playwright
@@ -237,3 +238,31 @@ def NC(Email,value):
     except Exception:
         driver.quit()
         pass
+
+def prime(Co,Cs):
+    try:
+        driver,short = Config('https://www.primevideo.com/offers/nonprimehomepage/ref=dv_web_force_root',True,7)
+
+        popup = short.until(EC.presence_of_element_located((By.CLASS_NAME,'CesUY3'))).click()
+        open_popup = short.until(EC.presence_of_element_located((By.CLASS_NAME,'kNxoK-'))).click()
+
+        Account = short.until(EC.presence_of_element_located((By.XPATH,'//*[@id="ap_email"]'))).send_keys(Co)
+        Continue = short.until(EC.presence_of_element_located((By.XPATH,'//*[@id="continue"]'))).click()
+
+        Password = short.until(EC.presence_of_element_located((By.XPATH,'//*[@id="ap_password"]'))).send_keys(Cs)
+        SignIn = short.until(EC.presence_of_element_located((By.XPATH,'//*[@id="signInSubmit"]'))).click()
+
+        try:
+            Password_is_incorrect  = short.until(EC.presence_of_element_located((By.CLASS_NAME,'a-list-item'))).text
+            if Password_is_incorrect == 'Your password is incorrect':
+                driver.quit()
+                return f'[{Co}][stado:dead]'
+            
+        except TimeoutException:
+            driver.quit()
+            return f'[{Co}][stado:revisar]'
+        
+    except TimeoutException:
+        driver.quit()
+        return f'[{Co}][stado:account not register]'
+
