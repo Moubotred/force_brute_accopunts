@@ -42,34 +42,49 @@ def install_firefox():
 def install_geckodriver():
 
     cmd = 'geckodriver --version'
-    msg = subprocess.run(cmd,stdout= subprocess.PIPE,stderr= subprocess.PIPE)
-    reg = msg.stdout.decode()
-    if reg.startswith('geckodriver'):
-        print('[-] Geckodriver ya Instalado')
-
-    else:
-        print("[-] Descargando geckodriver...")
-        geckodriver_url = "https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-win64.zip"
-        geckodriver_zip = "geckodriver.zip"
-
-        ruta = os.path.join(os.getcwd(),'geckodriver')    
-
-        if os.path.exists(ruta):
-            verify(ruta,geckodriver_url,geckodriver_zip)
+    ruta = os.path.join(os.getcwd(),'geckodriver')    
+    try:
+        msg = subprocess.run(cmd,stdout= subprocess.PIPE,stderr= subprocess.PIPE)
+        reg = msg.stdout.decode()
+        if reg.startswith('geckodriver'):
+            print('[-] Geckodriver ya Instalado')
         else:
-            os.mkdir(ruta)
-            verify(ruta,geckodriver_url,geckodriver_zip)
+            print("[-] Descargando geckodriver...")
+            geckodriver_url = "https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-win64.zip"
+            geckodriver_zip = "geckodriver.zip"
 
-        print("[-] Agregando geckodriver a las variables de entorno")
 
-        geckodriver_path = os.path.abspath("geckodriver.exe")
+            if os.path.exists(ruta):
+                verify(ruta,geckodriver_url,geckodriver_zip)
+            else:
+                os.mkdir(ruta)
+                verify(ruta,geckodriver_url,geckodriver_zip)
 
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS)
-        path_value = winreg.QueryValueEx(key, "Path")[0]
-        new_path_value = path_value + ";" + os.path.dirname(geckodriver_path)
-        winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, new_path_value)
-        winreg.CloseKey(key)
-        print("[-] geckodriver agregado correctamente a las variables de entorno.")
+            print("[-] Agregando geckodriver a las variables de entorno")
+
+            geckodriver_path = os.path.abspath("geckodriver.exe")
+
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS)
+            path_value = winreg.QueryValueEx(key, "Path")[0]
+            new_path_value = path_value + ";" + os.path.dirname(geckodriver_path)
+            winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, new_path_value)
+            winreg.CloseKey(key)
+            print("[-] geckodriver agregado correctamente a las variables de entorno.")
+
+    except FileNotFoundError:
+        file = 'geckodriver.exe'
+        if os.path.exists(f'{ruta}\\{file}'):
+            print("[-] Instalado pero sin variable de entorno")
+            print("[-] Agregando geckodriver a las variables de entorno")
+
+            geckodriver_path = os.path.abspath("geckodriver.exe")
+
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_ALL_ACCESS)
+            path_value = winreg.QueryValueEx(key, "Path")[0]
+            new_path_value = path_value + ";" + os.path.dirname(geckodriver_path)
+            winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, new_path_value)
+            winreg.CloseKey(key)
+            print("[-] geckodriver agregado correctamente a las variables de entorno.")
 
 def install_python():
     cmd = 'python --version'
@@ -87,7 +102,7 @@ def install_python():
         subprocess.run([python_installer, "/quiet", "InstallAllUsers=1", "PrependPath=1"])
         os.remove(python_installer)
         print("[-] Python instalado correctamente.")
-
+        
 def create_virtual_environment():
     print("[-] Creando entorno virtual...")
     pictures_path = os.path.expanduser("~/Pictures")
