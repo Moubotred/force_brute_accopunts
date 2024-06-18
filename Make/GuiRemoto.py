@@ -5,6 +5,7 @@ try:
 
     import ConfigStrem as St
     from PIL import Image, ImageTk
+    import playwright
 
 except Exception as e:
     print('[-] librerias no instaladas')
@@ -122,6 +123,16 @@ def HabilitarRegistro():
     RegistroText.config(state=tk.NORMAL)
 
 def start_log_thread():
+    def wrapper():
+        try:
+            Streming(directory_file[0], plataforma.get())
+        except playwright._impl._errors.Error as e:
+            if "Executable doesn't exist" in str(e):
+                print("Ejecutando instalación de Playwright...")
+                subprocess.run(["playwright", "install"])
+                print("Instalación de Playwright completada. Reintentando inicio de sesión...")
+                Streming(directory_file[0], plataforma.get())
+
     is_running = False
     if not is_running:
         log_thread = threading.Thread(target=Streming(directory_file[0],plataforma.get()))
