@@ -201,7 +201,6 @@ def Hbo(Co,Cs):
                 zip_ref.extractall()
             os.remove(name_tmp)
         
-
 def Crunchyroll(Co,Cs):
     try:
         driver,short = Config('https://sso.crunchyroll.com/login',True,7)
@@ -292,7 +291,6 @@ def prime(Co,Cs):
         driver.quit()
         return f'[{Co}][stado:account not register]'
 
-Hbo('lmateo27@gmail.com','marcagus.45')
 
 
 
